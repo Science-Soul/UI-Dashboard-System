@@ -1,1 +1,2 @@
-"# UI-Dashboard-System" 
+В проекте показано использование UniRx для системы фильтрации инвентаря.
+Использованы библиотеки Zenject, UniRx, UniTask, DoTween.
