@@ -1,25 +1,32 @@
 using UnityEngine;
-using TMPro;
 using Zenject;
 using UniRx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using UnityEngine.UI;
+using TMPro;
 
 public class InventoryWindow : BaseWindow
 {
-    [SerializeField] private TMP_InputField _searchInput;
-    [SerializeField] private Transform _itemsContainer;
-    [SerializeField] private GameObject _itemPrefab;
+    [SerializeField] Button _closeButton;
+    [SerializeField] TMP_InputField _searchInput;
+    [SerializeField] Transform _itemsContainer;
 
     private List<InventoryItem> _allItems = new();
     private readonly CompositeDisposable _disposables = new();
 
-    private DiContainer _container; // Для правильного спавна предметов
-    [Inject] public void Construct(DiContainer container)
+    private DiContainer _container;
+    private UIConfig _uiConfig;
+    private WindowService _windowService;
+
+    [Inject]
+    public void Construct(DiContainer container, UIConfig config, WindowService windowService)
     {
         _container = container;
+        _uiConfig = config;
+        _windowService = windowService;
     }
 
     // Используем Awake или Start, но не забываем очистку
@@ -34,6 +41,8 @@ public class InventoryWindow : BaseWindow
             .AddTo(_disposables);
 
         UpdateList(_allItems);
+
+        _closeButton.onClick.AddListener(() => CloseSelf().Forget());
     }
 
     private void FilterItems(string query)
@@ -60,8 +69,8 @@ public class InventoryWindow : BaseWindow
 
         foreach (var item in items)
         {
-            var instance = _container.InstantiatePrefab(_itemPrefab, _itemsContainer);
-            instance.GetComponentInChildren<TextMeshProUGUI>().text = item.Name;
+            var instance = _container.InstantiatePrefab(_uiConfig.ItemPrefab, _itemsContainer);
+            instance.GetComponent<InventoryItemView>().Setup(item.Name);
         }
     }
 
@@ -70,13 +79,25 @@ public class InventoryWindow : BaseWindow
         _disposables.Clear();
     }
 
+    private async UniTaskVoid CloseSelf()
+    {
+        await _windowService.CloseWindow<InventoryWindow>();
+    }
+
     private void LoadMockData() // Загрузим тестовые объекты
     {
         _allItems = new List<InventoryItem>
         {
-            new InventoryItem { Name = "Sword" },
-            new InventoryItem { Name = "Shield" },
-            new InventoryItem { Name = "Potion" }
+            new InventoryItem { Name = "Sword of Destiny" },
+            new InventoryItem { Name = "Iron Shield" },
+            new InventoryItem { Name = "Health Potion" },
+            new InventoryItem { Name = "Mana Potion" },
+            new InventoryItem { Name = "Golden Ring" },
+            new InventoryItem { Name = "Sword of Air" },
+            new InventoryItem { Name = "Wooden Shield" },
+            new InventoryItem { Name = "Red Axe" },
+            new InventoryItem { Name = "Ebony Bow" },
+            new InventoryItem { Name = "Silver Ring" }
         };
     }
 }
